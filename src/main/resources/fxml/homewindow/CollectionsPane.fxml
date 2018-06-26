@@ -23,11 +23,11 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<VBox fx:id="historyPane" xmlns="http://javafx.com/javafx/8.0.141"
+<VBox fx:id="collectionsPane" xmlns="http://javafx.com/javafx/8.0.141"
            xmlns:fx="http://javafx.com/fxml/1" alignment="TOP_CENTER" maxWidth="450.0"
-	minWidth="400.0" SplitPane.resizableWithParent="false" fx:controller="com.rohitawate.everest.controllers.SearchPaneController">
+	minWidth="400.0" SplitPane.resizableWithParent="false">
 	<children>
-		<HBox fx:id="historySearchFieldBox" alignment="CENTER"
+		<HBox fx:id="collectionsSearchFieldBox" alignment="CENTER"
 			fillHeight="false">
 			<VBox.margin>
 				<Insets />
@@ -39,7 +39,7 @@
 						<Image url="@../../assets/Search.png" />
 					</image>
 				</ImageView>
-				<TextField fx:id="historyTextField" styleClass="searchTextField" promptText="SEARCH HISTORY"
+				<TextField fx:id="collectionsTextField" styleClass="searchTextField" promptText="SEARCH COLLECTIONS"
 					HBox.hgrow="ALWAYS">
 					<padding>
 						<Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -65,10 +65,10 @@
 			<children>
 				<StackPane>
 					<children>
-						<ScrollPane fx:id="historyScrollPane"
+						<ScrollPane fx:id="collcetionsScrollPane"
 							fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER">
 							<content>
-								<VBox fx:id="historyTab" alignment="TOP_CENTER"
+								<VBox fx:id="collectionsTab" alignment="TOP_CENTER"
 									spacing="5.0">
 									<padding>
 										<Insets bottom="20.0" left="20.0" right="20.0"
@@ -77,9 +77,9 @@
 								</VBox>
 							</content>
 						</ScrollPane>
-						<StackPane fx:id="historyPromptLayer">
+						<StackPane fx:id="collectionsPromptLayer">
 							<children>
-								<Label text="YOUR REQUESTS HISTORY WILL APPEAR HERE"
+								<Label text="ADD NEW COLLECTIONS ..."
 									textAlignment="CENTER" textFill="#575757" wrapText="true">
 									<font>
 										<Font size="25.0" />
