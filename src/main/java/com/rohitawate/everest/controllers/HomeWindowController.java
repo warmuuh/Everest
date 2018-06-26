@@ -16,15 +16,31 @@
 
 package com.rohitawate.everest.controllers;
 
-import com.jfoenix.controls.JFXButton;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.net.URL;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.ResourceBundle;
+
 import com.rohitawate.everest.misc.KeyMap;
 import com.rohitawate.everest.misc.Services;
 import com.rohitawate.everest.misc.ThemeManager;
 import com.rohitawate.everest.models.DashboardState;
+
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.StringProperty;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -33,17 +49,8 @@ import javafx.scene.Scene;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.control.TextField;
-import javafx.scene.input.MouseButton;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
-import java.io.*;
-import java.net.URL;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 public class HomeWindowController implements Initializable {
     @FXML
@@ -52,55 +59,20 @@ public class HomeWindowController implements Initializable {
     private SplitPane splitPane;
     @FXML
     private TabPane homeWindowTabPane;
+    
     @FXML
-    private TextField historyTextField;
-    @FXML
-    private VBox historyTab, searchBox, historyPane;
-    @FXML
-    private StackPane historyPromptLayer, searchLayer, searchFailedLayer;
-    @FXML
-    private JFXButton clearSearchFieldButton;
+    private SearchPaneController searchPaneController;
 
     private HashMap<Tab, DashboardController> tabControllerMap;
-    private List<HistoryItemController> historyItemControllers;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Using LinkedHashMap because they retain order
         tabControllerMap = new LinkedHashMap<>();
-        historyItemControllers = new ArrayList<>();
         recoverState();
 
-        searchLayer.visibleProperty().bind(historyTextField.textProperty().isNotEmpty());
 
-        historyTextField.textProperty().addListener(((observable, oldValue, newValue) -> {
-            searchBox.getChildren().remove(0, searchBox.getChildren().size());
-            searchFailedLayer.setVisible(false);
-            List<HistoryItemController> searchResults = getSearchResults(historyTextField.getText());
-
-            // Method of sorting the HistoryItemControllers
-            searchResults.sort((controller1, controller2) -> {
-                int relativity1 = controller1.getRelativityIndex(historyTextField.getText());
-                int relativity2 = controller2.getRelativityIndex(historyTextField.getText());
-                if (relativity1 < relativity2)
-                    return 1;
-                else if (relativity1 > relativity2)
-                    return -1;
-                else
-                    return 0;
-            });
-
-            if (searchResults.size() != 0) {
-                for (HistoryItemController controller : searchResults) {
-                    addSearchItem(controller.getDashboardState());
-                }
-            } else {
-                searchFailedLayer.setVisible(true);
-            }
-        }));
-
-        clearSearchFieldButton.setOnAction(e -> historyTextField.clear());
-
+        searchPaneController.addHandler(this::addTab);
         homeWindowSP.setFocusTraversable(true);
 
         Platform.runLater(() -> {
@@ -111,32 +83,8 @@ public class HomeWindowController implements Initializable {
             Stage thisStage = (Stage) homeWindowSP.getScene().getWindow();
             thisStage.setOnCloseRequest(e -> saveState());
 
-            // Loads the history
-            Task<List<DashboardState>> historyLoader = new Task<List<DashboardState>>() {
-                @Override
-                protected List<DashboardState> call() {
-                    return Services.historyManager.getHistory();
-                }
-            };
+         
 
-            // Appends the history items to the HistoryTab
-            historyLoader.setOnSucceeded(e -> {
-                try {
-                    List<DashboardState> history = historyLoader.get();
-                    if (history.size() == 0) {
-                        historyPromptLayer.setVisible(true);
-                        return;
-                    }
-
-                    for (DashboardState state : history)
-                        addHistoryItem(state);
-                } catch (InterruptedException | ExecutionException E) {
-                    Services.loggingService.logSevere("Task thread interrupted while populating HistoryTab.", E, LocalDateTime.now());
-                }
-            });
-            historyLoader.setOnFailed(e -> Services.loggingService.logWarning(
-                    "Failed to load history.", (Exception) historyLoader.getException(), LocalDateTime.now()));
-            new Thread(historyLoader).start();
         });
     }
 
@@ -155,8 +103,8 @@ public class HomeWindowController implements Initializable {
             } else if (KeyMap.sendRequest.match(e)) {
                 Tab activeTab = getActiveTab();
                 tabControllerMap.get(activeTab).sendRequest();
-            } else if (KeyMap.toggleHistory.match(e)) {
-                toggleHistoryPane();
+//            } else if (KeyMap.toggleHistory.match(e)) {
+//                toggleHistoryPane();
             } else if (KeyMap.closeTab.match(e)) {
                 Tab activeTab = getActiveTab();
                 if (homeWindowTabPane.getTabs().size() == 1)
@@ -164,7 +112,7 @@ public class HomeWindowController implements Initializable {
                 homeWindowTabPane.getTabs().remove(activeTab);
                 tabControllerMap.remove(activeTab);
             } else if (KeyMap.searchHistory.match(e)) {
-                historyTextField.requestFocus();
+            	searchPaneController.focusSearchField();
             } else if (KeyMap.focusParams.match(e)) {
                 Tab activeTab = getActiveTab();
                 DashboardController controller = tabControllerMap.get(activeTab);
@@ -194,15 +142,15 @@ public class HomeWindowController implements Initializable {
         return homeWindowTabPane.getSelectionModel().getSelectedItem();
     }
 
-    private void toggleHistoryPane() {
-        if (historyPane.isVisible()) {
-            historyPane = (VBox) splitPane.getItems().remove(0);
-        } else {
-            splitPane.getItems().add(0, historyPane);
-        }
-
-        historyPane.setVisible(!historyPane.isVisible());
-    }
+//    private void toggleHistoryPane() {
+//        if (historyPane.isVisible()) {
+//            historyPane = (VBox) splitPane.getItems().remove(0);
+//        } else {
+//            splitPane.getItems().add(0, historyPane);
+//        }
+//
+//        historyPane.setVisible(!historyPane.isVisible());
+//    }
 
     private void addTab() {
         addTab(null);
@@ -294,61 +242,9 @@ public class HomeWindowController implements Initializable {
         }
     }
 
-    public void addHistoryItem(DashboardState state) {
-        HistoryItemController controller = appendToList(state, historyTab, true);
-        historyItemControllers.add(controller);
-    }
+	public void addHistoryItem(DashboardState state) {
+		searchPaneController.addHistoryItem(state);
+	}
 
-    private void addSearchItem(DashboardState state) {
-        appendToList(state, searchBox, false);
-    }
-
-    private HistoryItemController appendToList(DashboardState state, VBox layer, boolean appendToStart) {
-        historyPromptLayer.setVisible(false);
-        HistoryItemController controller = null;
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/homewindow/HistoryItem.fxml"));
-            Parent historyItem = loader.load();
-
-            controller = loader.getController();
-
-            controller.setRequestType(state.getHttpMethod());
-
-            controller.setAddress(state.getTarget().toString());
-            controller.setDashboardState(state);
-
-            if (appendToStart)
-                layer.getChildren().add(0, historyItem);
-            else
-                layer.getChildren().add(historyItem);
-
-            // Clicking on HistoryItem opens it up in a new tab
-            historyItem.setOnMouseClicked(mouseEvent -> {
-                if (mouseEvent.getButton() == MouseButton.PRIMARY)
-                    addTab(state);
-            });
-        } catch (IOException e) {
-            Services.loggingService.logSevere("Could not append HistoryItem to list.", e, LocalDateTime.now());
-        }
-        return controller;
-    }
-
-    private List<HistoryItemController> getSearchResults(String searchString) {
-        List<HistoryItemController> filteredList = new ArrayList<>();
-
-        for (HistoryItemController controller : historyItemControllers) {
-
-            int relativityIndex = controller.getRelativityIndex(searchString);
-
-            // Split the string into words and get total relativity index as sum of individual indices.
-            String words[] = searchString.split("\\s");
-            for (String word : words)
-                relativityIndex += controller.getRelativityIndex(word);
-
-            if (relativityIndex != 0)
-                filteredList.add(controller);
-        }
-
-        return filteredList;
-    }
+  
 }
