@@ -1,16 +1,26 @@
-/target/
-*.iml
-.idea/
-classes/
-src/main/java/META-INF/
-dependency-reduced-pom.xml
+target/
+!.mvn/wrapper/maven-wrapper.jar
 
-# Hides Eclipse Artifacts
-.settings/
+### STS ###
+.apt_generated
 .classpath
+.factorypath
 .project
+.settings
+.springBeans
 
-/BugReporter/src/META-INF/
-BugReporter/src/META-INF/
-Everest/
-out/
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+.kube/
