@@ -27,7 +27,7 @@ import java.net.URL;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-public class HistoryItemController implements Initializable {
+public class HistoryItemController implements Initializable, Searchable {
     @FXML
     private Label requestType, address;
     @FXML
@@ -56,7 +56,8 @@ public class HistoryItemController implements Initializable {
         tooltip.textProperty().bind(address.textProperty());
     }
 
-    public DashboardState getDashboardState() {
+    @Override
+	public DashboardState getDashboardState() {
         return dashboardState;
     }
 
@@ -64,7 +65,11 @@ public class HistoryItemController implements Initializable {
         this.dashboardState = dashboardState;
     }
 
-    public int getRelativityIndex(String searchString) {
+    /* (non-Javadoc)
+	 * @see com.rohitawate.everest.controllers.Searchable#getRelativityIndex(java.lang.String)
+	 */
+    @Override
+	public int getRelativityIndex(String searchString) {
         searchString = searchString.toLowerCase();
         String comparisonString;
 
