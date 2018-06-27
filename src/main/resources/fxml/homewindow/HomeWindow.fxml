@@ -27,7 +27,7 @@
 					tabMaxWidth="100.0" tabMinHeight="50.0" tabMinWidth="50.0"
 					SplitPane.resizableWithParent="false" maxWidth="450.0"
 					minWidth="400.0">
-					<Tab fx:id="searchTab" text="Search" closable="false">
+					<Tab fx:id="searchTab" text="History" closable="false">
 						<fx:include fx:id="searchPane" source="SearchPane.fxml" />
 					</Tab>
 					<Tab fx:id="collectionsTab" text="Collections" closable="false">

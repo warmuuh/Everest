@@ -27,7 +27,7 @@ import java.net.URL;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-public class HistoryItemController implements Initializable, Searchable {
+public class HistoryItemController implements Initializable, Searchable<DashboardState> {
     @FXML
     private Label requestType, address;
     @FXML

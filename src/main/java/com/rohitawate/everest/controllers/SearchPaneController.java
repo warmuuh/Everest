@@ -12,7 +12,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.input.MouseButton;
 
-public class SearchPaneController extends AbstractSearchablePaneController {
+public class SearchPaneController extends AbstractSearchablePaneController<DashboardState> {
 
 	private List<Consumer<DashboardState>> stateClickHandler = new LinkedList<>();
 
@@ -22,7 +22,7 @@ public class SearchPaneController extends AbstractSearchablePaneController {
 		return Services.historyManager.getHistory();
 	}
 
-	protected SearchEntry createEntryFromState(DashboardState state) throws IOException {
+	protected SearchEntry<DashboardState> createEntryFromState(DashboardState state) throws IOException {
 		FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/homewindow/HistoryItem.fxml"));
 		Parent historyItem = loader.load();
 
@@ -38,7 +38,7 @@ public class SearchPaneController extends AbstractSearchablePaneController {
 			if (mouseEvent.getButton() == MouseButton.PRIMARY)
 				handleClick(state);
 		});
-		return new SearchEntry(historyItem, controller);
+		return new SearchEntry<DashboardState>(historyItem, controller);
 	}
 
 	private void handleClick(DashboardState state) {
