@@ -63,6 +63,9 @@ public class HomeWindowController implements Initializable {
     @FXML
     private SearchPaneController searchPaneController;
 
+    @FXML
+    private CollectionsPaneController collectionsPaneController;
+    
     private HashMap<Tab, DashboardController> tabControllerMap;
 
     @Override
@@ -73,6 +76,7 @@ public class HomeWindowController implements Initializable {
 
 
         searchPaneController.addHandler(this::addTab);
+        collectionsPaneController.addHandler(this::addTab);
         homeWindowSP.setFocusTraversable(true);
 
         Platform.runLater(() -> {

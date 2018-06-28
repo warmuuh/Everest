@@ -278,6 +278,16 @@
     -fx-background-color: #282828;
 }
 
+/* Collections item */
+#collectionsItemBox {
+    -fx-background-color: #353535;
+}
+
+#collectionsItemBox:hover {
+    -fx-background-color: #282828;
+}
+
+
 #rawInputArea {
     -fx-font-size: 15px;
 }

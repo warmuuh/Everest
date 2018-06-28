@@ -17,25 +17,32 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.paint.*?>
 
-<TitledPane fx:id="collectionsItemBox" 
-	animated="false" text="${name.text}"
+<TitledPane fx:id="collectionsItemBox" animated="false"
+	text="" minWidth="300.0"
+	stylesheets="@../../css/Adreana.css"
 	xmlns="http://javafx.com/javafx/8.0.141"
-	xmlns:fx="http://javafx.com/fxml/1"
-	expanded="false"
+	xmlns:fx="http://javafx.com/fxml/1" expanded="false"
 	fx:controller="com.rohitawate.everest.controllers.CollectionsItemController">
 	<content>
-<!-- 		<TitledPane animated="false" text="title"> -->
-<!-- 			<content> -->
-				<Label fx:id="name" textFill="BLACK" HBox.hgrow="ALWAYS">
-					<font>
-						<Font size="15.0" />
-					</font>
-					<!-- <tooltip> -->
-					<!-- <Tooltip fx:id="tooltip" text="tooltip"/> -->
-					<!-- </tooltip> -->
-				</Label>
-<!-- 			</content> -->
-<!-- 		</TitledPane> -->
+		<!-- <TitledPane animated="false" text="title"> -->
+		<!-- <content> -->
+		<Label fx:id="name" textFill="BLACK" HBox.hgrow="ALWAYS">
+			<font>
+				<Font size="15.0" />
+			</font>
+			<!-- <tooltip> -->
+			<!-- <Tooltip fx:id="tooltip" text="tooltip"/> -->
+			<!-- </tooltip> -->
+		</Label>
+
+		<VBox fx:id="requestList" alignment="TOP_CENTER" spacing="5.0">
+			<padding>
+				<Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+			</padding>
+		</VBox>
+
+		<!-- </content> -->
+		<!-- </TitledPane> -->
 	</content>
 	<padding>
 		<Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
