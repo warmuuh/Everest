@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rohitawate.everest.misc.EverestUtilities;
 import com.rohitawate.everest.misc.Services;
 import com.rohitawate.everest.models.DashboardState;
+import com.rohitawate.everest.models.RequestCollection;
 import com.rohitawate.everest.settings.Settings;
 
 import javax.ws.rs.core.MediaType;
@@ -89,6 +90,14 @@ public class HistoryManager {
         statement =
                 conn.prepareStatement(EverestUtilities.trimString(queries.get("createTuplesTable").toString()));
         statement.execute();
+
+        statement =
+                conn.prepareStatement(EverestUtilities.trimString(queries.get("createCollectionsTable").toString()));
+        statement.execute();
+
+        statement =
+                conn.prepareStatement(EverestUtilities.trimString(queries.get("createCollectionRequestMapTable").toString()));
+        statement.execute();
     }
 
     // Method is made synchronized to allow only one database transaction at a time.
@@ -122,66 +131,109 @@ public class HistoryManager {
 
             ResultSet resultSet = statement.executeQuery();
 
-            DashboardState state;
             while (resultSet.next()) {
-                state = new DashboardState();
-
-                try {
-                    state.setTarget(resultSet.getString("Target"));
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                }
-
-                int requestID = resultSet.getInt("ID");
-                state.setHeaders(getRequestHeaders(requestID));
-                state.setParams(getTuples(requestID, "Param"));
-                state.setHttpMethod(resultSet.getString("Type"));
-
-                if (!(state.getHttpMethod().equals("GET") || state.getHttpMethod().equals("DELETE"))) {
-                    // Retrieves request body ContentType for querying corresponding table
-                    statement = conn.prepareStatement(EverestUtilities.trimString(queries.get("selectRequestContentType").toString()));
-                    statement.setInt(1, requestID);
-
-                    ResultSet RS = statement.executeQuery();
-
-                    String contentType = "";
-                    if (RS.next())
-                        contentType = RS.getString("ContentType");
-
-                    state.setContentType(contentType);
-
-                    // Retrieves body from corresponding table
-                    switch (contentType) {
-                        case MediaType.TEXT_PLAIN:
-                        case MediaType.APPLICATION_JSON:
-                        case MediaType.APPLICATION_XML:
-                        case MediaType.TEXT_HTML:
-                        case MediaType.APPLICATION_OCTET_STREAM:
-                            statement = conn.prepareStatement(EverestUtilities.trimString(queries.get("selectRequestBody").toString()));
-                            statement.setInt(1, requestID);
-
-                            RS = statement.executeQuery();
-
-                            if (RS.next())
-                                state.setBody(RS.getString("Body"));
-                            break;
-                        case MediaType.APPLICATION_FORM_URLENCODED:
-                            state.setStringTuples(getTuples(requestID, "String"));
-                            break;
-                        case MediaType.MULTIPART_FORM_DATA:
-                            state.setStringTuples(getTuples(requestID, "String"));
-                            state.setFileTuples(getTuples(requestID, "File"));
-                            break;
-                    }
-                }
-
-                history.add(state);
+            	DashboardState state = readRequestData(resultSet);
+            	history.add(state);
             }
         } catch (SQLException e) {
             Services.loggingService.logWarning("Database error.", e, LocalDateTime.now());
         }
         return history;
     }
+    
+    
+    public synchronized List<RequestCollection> getRequestCollections() {
+        List<RequestCollection> collections = new ArrayList<>();
+        try {
+            statement = conn.prepareStatement(EverestUtilities.trimString(queries.get("selectCollections").toString()));
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+            	RequestCollection state = readRequestCollectionData(resultSet);
+            	collections.add(state);
+            }
+        } catch (SQLException e) {
+            Services.loggingService.logWarning("Database error.", e, LocalDateTime.now());
+        }
+        return collections;
+    }
+    
+    
+
+	private RequestCollection readRequestCollectionData(ResultSet resultSet) throws SQLException {
+		RequestCollection collection = new RequestCollection();
+		
+		collection.setId(resultSet.getString("ID"));
+		collection.setName(resultSet.getString("Name"));
+		collection.setDescription(resultSet.getString("Description"));
+		
+		statement = conn.prepareStatement(EverestUtilities.trimString(queries.get("selectCollectionRequests").toString()));
+        statement.setString(1, collection.getId());
+        ResultSet requestsResultSet = statement.executeQuery();
+        List<DashboardState> requests = new ArrayList<>();
+        while (requestsResultSet.next()) {
+        	DashboardState state = readRequestData(requestsResultSet);
+        	requests.add(state);
+        }
+        collection.setRequests(requests); 
+		return collection;
+	}
+
+	private DashboardState readRequestData(ResultSet resultSet) throws SQLException {
+		DashboardState state;
+	    state = new DashboardState();
+
+	    try {
+	        state.setTarget(resultSet.getString("Target"));
+	    } catch (MalformedURLException e) {
+	        e.printStackTrace();
+	    }
+
+	    int requestID = resultSet.getInt("ID");
+	    state.setHeaders(getRequestHeaders(requestID));
+	    state.setParams(getTuples(requestID, "Param"));
+	    state.setHttpMethod(resultSet.getString("Type"));
+
+	    if (!(state.getHttpMethod().equals("GET") || state.getHttpMethod().equals("DELETE"))) {
+	        // Retrieves request body ContentType for querying corresponding table
+	        statement = conn.prepareStatement(EverestUtilities.trimString(queries.get("selectRequestContentType").toString()));
+	        statement.setInt(1, requestID);
+
+	        ResultSet RS = statement.executeQuery();
+
+	        String contentType = "";
+	        if (RS.next())
+	            contentType = RS.getString("ContentType");
+
+	        state.setContentType(contentType);
+
+	        // Retrieves body from corresponding table
+	        switch (contentType) {
+	            case MediaType.TEXT_PLAIN:
+	            case MediaType.APPLICATION_JSON:
+	            case MediaType.APPLICATION_XML:
+	            case MediaType.TEXT_HTML:
+	            case MediaType.APPLICATION_OCTET_STREAM:
+	                statement = conn.prepareStatement(EverestUtilities.trimString(queries.get("selectRequestBody").toString()));
+	                statement.setInt(1, requestID);
+
+	                RS = statement.executeQuery();
+
+	                if (RS.next())
+	                    state.setBody(RS.getString("Body"));
+	                break;
+	            case MediaType.APPLICATION_FORM_URLENCODED:
+	                state.setStringTuples(getTuples(requestID, "String"));
+	                break;
+	            case MediaType.MULTIPART_FORM_DATA:
+	                state.setStringTuples(getTuples(requestID, "String"));
+	                state.setFileTuples(getTuples(requestID, "File"));
+	                break;
+	        }
+	    }
+
+	   return state;
+	}
 
     private HashMap<String, String> getRequestHeaders(int requestID) {
         HashMap<String, String> headers = new HashMap<>();

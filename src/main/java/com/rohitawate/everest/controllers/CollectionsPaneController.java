@@ -1,17 +1,16 @@
 package com.rohitawate.everest.controllers;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.rohitawate.everest.misc.Services;
 import com.rohitawate.everest.models.DashboardState;
 import com.rohitawate.everest.models.RequestCollection;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.input.MouseButton;
 
 public class CollectionsPaneController extends AbstractSearchablePaneController<RequestCollection> {
 
@@ -19,7 +18,7 @@ public class CollectionsPaneController extends AbstractSearchablePaneController<
 
 	@Override
 	protected List<RequestCollection> loadInitialEntries() {
-		return Arrays.asList(new RequestCollection("TestCollection"), new RequestCollection("AnotherTestCollection"));
+		return Services.historyManager.getRequestCollections();
 	}
 
 	@Override
